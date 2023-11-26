@@ -1,0 +1,9 @@
+/logs/docker/*.log {
+  daily
+  rotate 1
+  maxage 2
+  compress
+  notifempty
+  create 640 td-agent td-agent
+  sharedscripts
+}

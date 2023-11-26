@@ -1,0 +1,67 @@
+image:
+  name: hashicorp/packer:latest
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
+before_script:
+  - packer --version
+
+stages:
+  - validate-linux
+  - build-linux
+  - validate-base
+  - build-base
+  - validate-stage2
+  - build-stage2
+
+validate-linux:
+  stage: validate-linux
+  script:
+    - find . -maxdepth 2 -name 'build-linux-ami-customer.json' -print0 | xargs -t0n1 packer validate
+  only:
+    changes:
+      - linux/build-linux-ami-customer.json
+
+build-linux:
+  stage: build-linux
+  script:
+    - find . -maxdepth 2 -name ''build-linux-ami-customer.jsonn' -print0 | xargs -t0n1 packer build
+  when: manual
+  only:
+    changes:
+      - linux/'build-linux-ami-customer.json
+
+validate-base:
+  stage: validate-base
+  script:
+    - find . -maxdepth 2 -name 'windows_with_containers.json' -print0 | xargs -t0n1 packer validate
+  only:
+    changes:
+      - windows/windows_with_containers.json
+
+build-base:
+  stage: build-base
+  script:
+    - find . -maxdepth 2 -name 'windows_with_containers.json' -print0 | xargs -t0n1 packer build
+  when: manual
+  only:
+    changes:
+      - windows/windows_with_containers.json
+
+validate-stage2:
+  stage: validate-stage2
+  script:
+    - find . -maxdepth 2 -name 'windows_customer_post_reboot.json' -print0 | xargs -t0n1 packer validate
+  only:
+    changes:
+      - windows/windows_customer_post_reboot.json
+
+build-stage2:
+  stage: build-stage2
+  script:
+    - find . -maxdepth 2 -name 'windows_customer_post_reboot.json' -print0 | xargs -t0n1 packer build
+  when: manual
+  only:
+    changes:
+      - windows/windows_customer_post_reboot.json

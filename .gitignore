@@ -1,0 +1,8 @@
+keys/*
+.terraform/*
+.DS_Store/*
+.terraform
+.DS_Store
+*/.DS_Store
+*/*/.DS_Store
+
