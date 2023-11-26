@@ -1,0 +1,9 @@
+{
+    "data-root": "D:\\docker",
+    "insecure-registries" : ["dtr.platform-engineering.com"],
+    "log-driver": "fluentd",
+    "log-opts": {
+       "fluentd-address": "localhost:24224",
+       "tag":  "{{.ImageName}}/{{.Name}}/{{.ID}}"
+ }
+}

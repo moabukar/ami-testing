@@ -1,0 +1,135 @@
+{
+    "variables": {
+        "source_ami_id": "ami-0f8ccb741c0e0a842",
+        "version": "1.14",
+        "tag_application": "demo-windows",
+        "tag_ami_type": "docker_base"
+       },
+        "builders": [
+          {
+
+          "type": "amazon-ebs",
+          "region": "eu-west-2",
+          "source_ami": "{{user `source_ami_id`}}",
+          "instance_type": "m5.large",
+          "ami_name": "HCP-Windows-Post-Base-AMI-{{user `version`}}",
+          "user_data_file": "windows/provisioners/base_provisioner.ps1",
+          "communicator": "winrm",
+          "winrm_username": "Administrator",
+          "winrm_port": "5986",
+          "winrm_use_ssl": true,
+          "winrm_insecure": true,
+          "associate_public_ip_address": "false",
+          "ssh_interface": "private_dns",
+          "tags": {
+            "Application": "{{user `tag_application`}}",
+            "AMI_Type": "{{user `tag_ami_type`}}",
+            "Name": "HCP-Windows-AMI",
+            "Version": "{{user `version`}}",
+            "Source_AMI": "{{user `source_ami_id`}}",
+            "Service_Role": "HCP",
+            "Approved": "HMRC_Approved_Image",
+            "HCP": "HCP_Authorised_Image"
+        },
+        "run_tags": {
+          "Application": "{{user `tag_application`}}",
+          "AMI_Type": "{{user `tag_ami_type`}}",
+          "Name": "HCP-Windows-AMI",
+          "Version": "{{user `version`}}",
+          "Source_AMI": "{{user `source_ami_id`}}",
+          "Service_Role": "HCP",
+          "cdg_bootstrap": "false",
+          "cdg_noreboot": "true"
+        },
+        "run_volume_tags": {
+          "Application": "{{user `tag_application`}}",
+          "AMI_Type": "{{user `tag_ami_type`}}",
+          "Name": "HCP-Windows-AMI",
+          "Version": "{{user `version`}}",
+          "Source_AMI": "{{user `source_ami_id`}}",
+          "Service_Role": "HCP"
+        },
+        "launch_block_device_mappings" : [
+            {
+              "volume_type" : "gp2",
+              "device_name" : "/dev/sda1",
+              "delete_on_termination" : true,
+              "volume_size" : 100
+            },
+            {
+              "volume_type" : "gp2",
+              "device_name" : "/dev/sdf",
+              "delete_on_termination" : true,
+              "volume_size" : 125
+            },
+            {
+                "volume_type" : "gp2",
+                "device_name" : "/dev/sdg",
+                "delete_on_termination" : true,
+                "volume_size" : 25
+            }
+          ]
+        }
+    ],
+
+    "provisioners": [
+
+          {
+            "type": "file",
+            "source": "windows/Install_Media/Fluentd/td-agent.conf",
+            "destination": "C:\\Windows\\temp\\td-agent.conf"
+          },
+          {
+            "type": "file",
+            "source": "windows/Install_Media/wmi/wmi_exporter-0.4.3-amd64.msi",
+            "destination": "C:\\Windows\\temp\\wmi_exporter-0.4.3-amd64.msi"
+          },
+          {
+            "type": "file",
+            "source": "windows/Install_Media/winlogbeats/winlogbeat-6.4.2-windows-x86_64.zip",
+            "destination": "C:\\Windows\\temp\\winlogbeat-6.4.2-windows-x86_64.zip"
+          },
+          {
+            "type": "file",
+            "source": "windows/Install_Media/winlogbeats/winlogbeat.yml",
+            "destination": "C:\\Windows\\temp\\winlogbeats\\winlogbeat.yml"
+          },
+          {
+            "type": "file",
+            "source": "windows/Install_Media/winlogbeats/filebeat-5.6.16-windows-x86_64.zip",
+            "destination": "C:\\Windows\\temp\\filebeat\\filebeat-5.6.16-windows-x86_64.zip"
+          },
+          {
+            "type": "file",
+            "source": "windows/Install_Media/diskpartscript.txt",
+            "destination": "C:\\diskpartscript.txt"
+          },
+          {
+           "type": "powershell",
+           "inline": [
+             "diskpart /s C:\\diskpartscript.txt"
+           ]
+          },
+
+          {
+            "type": "powershell",
+            "script": "windows/provisioners/full_provision.ps1"
+          },
+          {
+              "type": "powershell",
+              "script": "windows/provisioners/dockernodeandimagepull.ps1"
+           },
+           {
+            "type": "file",
+            "source": "windows/Install_Media/Docker/swarm_config/daemon.json",
+            "destination": "C:\\ProgramData\\docker\\config\\daemon.json"
+          },
+          {
+            "type": "powershell",
+            "inline": [
+              "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\InitializeInstance.ps1 -Schedule",
+              "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\SysprepInstance.ps1 -NoShutdown"
+            ]
+          }
+      ]
+      }

@@ -1,0 +1,16 @@
+{
+    "hosts": ["tcp://0.0.0.0:2376", "npipe://"],
+    "allow-nondistributable-artifacts": ["dtr.platform-engineering.com"],
+    "insecure-registries": ["dtr.platform-engineering.com"],
+
+    "data-root": "D:\\docker",
+    "tlscacert": "C:\\ProgramData\\docker\\daemoncerts\\ca.pem",
+    "tlscert": "C:\\ProgramData\\docker\\daemoncerts\\cert.pem",
+    "tlskey": "C:\\ProgramData\\docker\\daemoncerts\\key.pem",
+    "tlsverify": false,
+    "log-driver": "fluentd",
+    "log-opts": {
+       "fluentd-address": "localhost:24224",
+       "tag":  "{{.ImageName}}/{{.Name}}/{{.ID}}"
+    }
+}

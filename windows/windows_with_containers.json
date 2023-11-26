@@ -1,0 +1,102 @@
+{
+    "variables": {
+        "source_ami_id": "ami-0f9b7d179a023b114",
+        "version": "1.004",
+        "tag_application": "demo-windows",
+        "tag_ami_type": "docker_base"
+       }, 
+        "builders": [
+          {
+
+          "type": "amazon-ebs",
+          "region": "eu-west-2",
+          "source_ami": "{{user `source_ami_id`}}",
+          "instance_type": "m5.large",
+          "ami_name": "Docker-Demo-Windows-Base-AMI-{{user `version`}}",
+          "user_data_file": "windows/provisioners/base_provisioner.ps1",
+          "communicator": "winrm",
+          "winrm_username": "Administrator",
+          "winrm_port": "5986",
+          "winrm_use_ssl": true,
+          "winrm_insecure": true,
+          "associate_public_ip_address": "false",
+          "ssh_interface": "private_dns",
+          "tags": 
+          {
+          "Application": "{{user `tag_application`}}",
+          "AMI_Type": "{{user `tag_ami_type`}}",
+          "Name": "Docker-Demo-Windows-AMI",
+          "Version": "{{user `version`}}",
+          "Source_AMI": "{{user `source_ami_id`}}",
+          "Service_Role": "Docker-Demo"
+        },
+        "run_tags": {
+          "Application": "{{user `tag_application`}}",
+          "AMI_Type": "{{user `tag_ami_type`}}",
+          "Name": "Docker-Demo-Windows-AMI",
+          "Version": "{{user `version`}}",
+          "Source_AMI": "{{user `source_ami_id`}}",
+          "Service_Role": "Docker-Demo"
+        },
+        "run_volume_tags": {
+          "Application": "{{user `tag_application`}}",
+          "AMI_Type": "{{user `tag_ami_type`}}",
+          "Name": "Docker-Demo-Windows-AMI",
+          "Version": "{{user `version`}}",
+          "Source_AMI": "{{user `source_ami_id`}}",
+          "Service_Role": "Docker-Demo"
+        },
+        "launch_block_device_mappings" : [
+            {
+              "volume_type" : "gp2",
+              "device_name" : "/dev/sda1",
+              "delete_on_termination" : true,
+              "volume_size" : 100
+            },
+            {
+              "volume_type" : "gp2",
+              "device_name" : "/dev/sdf",
+              "delete_on_termination" : true,
+              "volume_size" : 125
+            },
+            {
+                "volume_type" : "gp2",
+                "device_name" : "/dev/sdg",
+                "delete_on_termination" : true,
+                "volume_size" : 25
+            }
+          ]
+        }
+    ],
+
+    "provisioners": [
+
+       {
+          "type": "powershell",
+          "script": "windows/provisioners/install_windows_dockeree.ps1"
+        },
+        {
+          "type": "file",
+          "source": "windows/Install_Media/Docker/swarm_config/daemon.json",
+          "destination": "C:\\ProgramData\\docker\\config\\daemon.json"
+        },
+        {
+            "type": "powershell",
+            "inline": [
+              "Uninstall-WindowsFeature -Name Windows-Defender"
+            ]
+          },
+        {
+          "type": "windows-restart",
+          "restart_command": "powershell \"& {(Get-WmiObject win32_operatingsystem).LastBootUpTime > C:\\ProgramData\\lastboot.txt; Restart-Computer -force}\"",
+          "restart_check_command": "powershell -command \"& {if ((get-content C:\\ProgramData\\lastboot.txt) -eq (Get-WmiObject win32_operatingsystem).LastBootUpTime) {Write-Output 'Sleeping for 600 seconds to wait for reboot'; start-sleep 600} else {Write-Output 'Reboot complete'}}\""
+        },
+        {
+            "type": "powershell",
+            "inline": [
+              "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\InitializeInstance.ps1 -Schedule",
+              "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\SysprepInstance.ps1 -NoShutdown"
+            ]
+          }
+      ]
+      }
