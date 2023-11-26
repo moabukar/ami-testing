@@ -1,0 +1,68 @@
+name: Packer CI
+
+on:
+  push:
+    paths:
+      - 'linux/**'
+      - 'windows/**'
+
+jobs:
+  validate-linux:
+    runs-on: ubuntu-latest
+    container: hashicorp/packer:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Validate Linux AMI
+        run: find . -maxdepth 2 -name 'build-linux-ami-customer.json' -exec packer validate {} +
+
+  build-linux:
+    runs-on: ubuntu-latest
+    container: hashicorp/packer:latest
+    needs: validate-linux
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Build Linux AMI
+        run: find . -maxdepth 2 -name 'build-linux-ami-customer.json' -exec packer build {} +
+    if: github.event_name == 'workflow_dispatch'
+
+  validate-base:
+    runs-on: ubuntu-latest
+    container: hashicorp/packer:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Validate Windows with Containers
+        run: find . -maxdepth 2 -name 'windows_with_containers.json' -exec packer validate {} +
+
+  build-base:
+    runs-on: ubuntu-latest
+    container: hashicorp/packer:latest
+    needs: validate-base
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Build Windows with Containers
+        run: find . -maxdepth 2 -name 'windows_with_containers.json' -exec packer build {} +
+    if: github.event_name == 'workflow_dispatch'
+
+  validate-stage2:
+    runs-on: ubuntu-latest
+    container: hashicorp/packer:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Validate Windows Customer Post Reboot
+        run: find . -maxdepth 2 -name 'windows_customer_post_reboot.json' -exec packer validate {} +
+
+  build-stage2:
+    runs-on: ubuntu-latest
+    container: hashicorp/packer:latest
+    needs: validate-stage2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Build Windows Customer Post Reboot
+        run: find . -maxdepth 2 -name 'windows_customer_post_reboot.json' -exec packer build {} +
+    if: github.event_name == 'workflow_dispatch'
